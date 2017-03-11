@@ -1,1 +1,2 @@
-kernel//home/zhang/work/memory/my_slab.ko
+kernel//mnt/QuickDevSkeleton/memory/my_slab.ko
+kernel//mnt/QuickDevSkeleton/memory/list_cache.ko

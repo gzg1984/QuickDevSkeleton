@@ -46,7 +46,7 @@ int __init my_init(void)
 								0,					 /* align */
 								SLAB_PANIC, /* flags */
 								NULL);				 /* constructor */
-	printk("Sizeof item = %d\n", sizeof(struct item));
+	printk("Sizeof item = %ld\n", sizeof(struct item));
 
 
 	for (i=0; i<ITEM_LEN; i++) {
