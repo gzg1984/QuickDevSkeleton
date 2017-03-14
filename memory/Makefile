@@ -1,6 +1,6 @@
 # makefile for modules
 
-obj-m := my_slab.o list_cache.o
+obj-m := my_slab.o list_cache.o list_buffer.o
 KERNEL := /lib/modules/`uname -r`/build
 
 all:
