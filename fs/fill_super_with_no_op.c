@@ -36,7 +36,7 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
 {
 	return 0;
 }
-static const struct super_operations example_sops = {
+static const struct super_operations devpts_sops = {
 	.statfs         = simple_statfs,
 	.remount_fs     = devpts_remount,
 	.show_options   = devpts_show_options,
@@ -69,7 +69,7 @@ int example_fill_super(struct super_block *s, void *data, int silent)
 	s->s_blocksize = 1024;
 	s->s_blocksize_bits = 10;
 	//s->s_magic = DEVPTS_SUPER_MAGIC;
-	s->s_op = &example_sops;
+//	s->s_op = &devpts_sops;
 	s->s_time_gran = 1;
 
 	s->s_fs_info = new_example_fs_info(s);
