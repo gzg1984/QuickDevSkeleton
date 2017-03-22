@@ -94,13 +94,13 @@ int example_fill_super(struct super_block *s, void *data, int silent)
 	inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO | S_IWUSR;
 	inode->i_op = &simple_dir_inode_operations;
 	inode->i_fop = &simple_dir_operations;
-	//set_nlink(inode, 2);
 
-	//s->s_root = d_make_root(inode);
-	//if (s->s_root)
+	printk("before create roote inode. If miss this step ,system will crash\n");
+	s->s_root = d_make_root(inode);
+	if (s->s_root)
 		return 0;
 
-	//pr_err("get root dentry failed\n");
+	pr_err("get root dentry failed\n");
 
 fail:
 	return -ENOMEM;
