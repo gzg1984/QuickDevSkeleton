@@ -1,7 +1,11 @@
 #include <linux/module.h>
 #include <linux/init.h>
+
 #include <linux/fs.h>
-#include "inode.h"
+#include "../file.h"
+#include "../inode.h"
+/* Must implement #3 !*/
+/* Readdir give the name of entry to the VFS, and VFS create dentry then pass to this function**/
 static struct dentry *example_lookup(struct inode * dir, 
 		struct dentry *dentry, 
 		struct nameidata *__unused_nd)
@@ -10,11 +14,15 @@ static struct dentry *example_lookup(struct inode * dir,
 
 	/* init it! we should read these data from disk ,do we ?*/
 	inode = iget_locked(dir->i_sb, 123);
-	inode->i_mode = 0x666;
+	inode->i_mode = 0x6660;
 	inode->i_uid = 0xde;
 	inode->i_gid = 0xad;
 	inode->i_size = 3;
 	inode->i_atime = inode->i_ctime = inode->i_atime = CURRENT_TIME;
+
+	/* this is implement in file.h */
+	inode->i_fop = &example_file_operations; /** Hey ! look here ! we use our own operation! 
+						  	now we can read ?**/
 	unlock_new_inode(inode);
 
 	return d_splice_alias(inode, dentry);
@@ -25,7 +33,7 @@ const struct inode_operations example_dir_inode_operations = {
 };
 
 
-
+/* Must implement #2 !*/
 static int example_readdir(struct file * filp,
 			 void * dirent, filldir_t filldir)
 {
@@ -45,8 +53,10 @@ static int example_readdir(struct file * filp,
 const struct file_operations example_dir_operations = {
 	.llseek         = generic_file_llseek,
 	.read           = generic_read_dir,
+	/* for newer kernel ,this function will be replace with ...**/
 	.readdir        = example_readdir,         /* The only thing we need exactly in exapmle file system*/
 };
+/* Must implement #1 !*/
 extern struct inode* get_example_fs_root_inode(struct super_block *s)
 {
         struct inode* temp_inode_to_return=NULL;

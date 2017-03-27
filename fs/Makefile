@@ -1,7 +1,11 @@
+obj-m += example_fs.o
+
+
 #obj-m += example_fs_min_registerable.o   
 # This can never been mountable, because we don't fill the super block
 #register file system ,will shown in /proc/filesystems , but "mount" will be kiiled  because there is no "mount function"
-example_fs_min_registerable-y		:= super_never_mount.o
+#
+#example_fs-y		:= never_mount/super.o
 
 #obj-m += example_fs_nodev_no_fill_sb.o 
 # This can be register, but mount will fail too, because we don't fille the super block too
@@ -9,29 +13,54 @@ example_fs_nodev_no_fill_sb-y		:= super_never_fill_sb.o
 
 #if we fill_super_with_no_op.o , the mount will die while alloc_inode(super_block*)
 # but this will never write/create file. We don't handle it.
-#obj-m += example_fs_min_mountable.o
-example_fs_min_mountable-y		:= super_nodev_fill_sb.o fill_super_with_simple_operation.o 
+#
+#example_fs-y		:= min_mountable/super.o min_mountable/fill_super.o
 
-#Now we will do some real work, first of all, the super.c will work from now on.
-# And in file_system.c we will use the real block dev
-#obj-m += example_fs_min_device.o
-example_fs_min_device-y		:= file_system.o super.o inode_nothing.o
+####Class 4 the most mini example filesystem for block device
+####Now we will do some real work, first of all, the super.c will work from now on.
+####And in file_system.c we will use the real block dev
+#
+#example_fs-y		:= min_device/file_system.o min_device/super.o min_device/inode_nothing.o
 
-#Create a file in readdir from root inode
-obj-m += example_fs_min_root.o
-example_fs_min_root-y		:= file_system.o super.o inode.o
+####Class 5  the most mini example filesyste for root inode on block device 
+####Create a file in readdir from root inode
+#
+#example_fs-y		:= min_root/file_system.o min_root/super.o min_root/inode.o
+
+####Class 6  the most mini example filesyste for root inode on block device 
+#### set the file operation, specially the read function.
+#
+#example_fs-y		:= min_read/file_system.o \
+				min_read/super.o \
+				min_read/inode.o \
+				min_read/file.o 
+
+####Class 7 read from block: from block page cache
+#example_fs-y		:= sb_bread/file_system.o \
+				sb_bread/super.o \
+				sb_bread/inode.o \
+				sb_bread/file.o \
+				sb_bread/read.o
+
+####Class 8 read from block: use bio to fill a temprary page
+example_fs-y		:= block_page_read/file_system.o \
+				block_page_read/super.o \
+				block_page_read/inode.o \
+				block_page_read/file.o \
+				block_page_read/read.o
 
 
 
 ####obj-m += example_fs_nodisk.o 
 ####obj-m := example_fs_nodisk.o example_fs_file_on_disk.o
 
-example_fs_nodisk-y		:= super.o fill_super_with_simple_operation.o
+#example_fs_nodisk-y		:= super.o fill_super_with_simple_operation.o
 #example_fs_file_on_disk-y		:= inode.o
 
 KERNEL := /lib/modules/`uname -r`/build
 
 all:
+	zcat /boot/symvers-3.0.76-0.11-default.gz > Module.symvers
 	make -C $(KERNEL) M=`pwd` modules
 
 install:
