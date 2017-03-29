@@ -3,26 +3,20 @@
 #include <linux/fs.h>
 #include <linux/sched.h>
 #include <linux/namei.h>
-#include <linux/slab.h>
 #include <linux/mount.h>
-#include <linux/tty.h>
-#include <linux/mutex.h>
-#include <linux/idr.h>
-#include <linux/parser.h>
-#include <linux/fsnotify.h>
-#include <linux/seq_file.h>
 
-#include "fill_super.h"
+#include "../fill_super.h"
+/** Must implement ! */
+static struct dentry *example_fs_mount(struct file_system_type *fs_type,
+		        int flags, const char *dev_name, void *data)
+{
+	return mount_bdev(fs_type, flags, dev_name, data, example_fill_super); 
 
-/*
- *         struct super_block *(*get_sb) (struct file_system_type *, int,
- *                                                const char *, void *);
- *                                                */
+}
 static struct file_system_type example_fs_type = {
 	.name		= "example_fs",
-	.get_sb=NULL, /* in old kernel ,use get_sb**/
-	//.mount		= NULL,/* in new kernel ,use mount,*/
-	.kill_sb	= NULL,
+	.mount          = example_fs_mount, /** the only function you need to implement in this source file **/
+	.kill_sb	= kill_block_super, /** use the system default routin**/
 };
 
 static int __init init_example_fs(void)

@@ -7,10 +7,12 @@ obj-m += example_fs.o
 #
 #example_fs-y		:= never_mount/super.o
 
+##### class 2, do not fill super
 #obj-m += example_fs_nodev_no_fill_sb.o 
 # This can be register, but mount will fail too, because we don't fille the super block too
-example_fs_nodev_no_fill_sb-y		:= super_never_fill_sb.o
+#example_fs-y		:= nodev_no_fill_sb/super_never_fill_sb.o
 
+##### class 3, fill super ,but no operation
 #if we fill_super_with_no_op.o , the mount will die while alloc_inode(super_block*)
 # but this will never write/create file. We don't handle it.
 #
@@ -43,11 +45,26 @@ example_fs_nodev_no_fill_sb-y		:= super_never_fill_sb.o
 				sb_bread/read.o
 
 ####Class 8 read from block: use bio to fill a temprary page
-example_fs-y		:= block_page_read/file_system.o \
+#example_fs-y		:= block_page_read/file_system.o \
 				block_page_read/super.o \
 				block_page_read/inode.o \
 				block_page_read/file.o \
 				block_page_read/read.o
+
+####Class 9 read from block: use bio to fill radix page tree.
+#example_fs-y		:= page_cache_read/file_system.o \
+				page_cache_read/super.o \
+				page_cache_read/inode.o \
+				page_cache_read/file.o \
+				page_cache_read/address_mapping.o
+
+####Class 10 read from block via bread: actrualy , this is not faster than the bio. this will be even slower
+example_fs-y		:= buffer_read/file_system.o \
+				buffer_read/super.o \
+				buffer_read/inode.o \
+				buffer_read/file.o \
+				buffer_read/address_mapping.o
+
 
 
 

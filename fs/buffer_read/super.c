@@ -12,18 +12,16 @@
 #include <linux/fsnotify.h>
 #include <linux/seq_file.h>
 
-#include "fill_super.h"
-#include "inode.h"
+#include "../fill_super.h"
+#include "../inode.h"
 static const struct super_operations example_sops = {
 	.statfs         = simple_statfs,
-
 };
 
+/* Must implement ! will be called in mount routin in "file system -> mount " function **/
 int example_fill_super(struct super_block *s, void *data, int silent)
 {
 	struct inode *inode;
-	printk("Enter example_fill_super \n");
-
 	s->s_blocksize = 1024;
 	s->s_blocksize_bits = 10;
 	s->s_op = &example_sops;
@@ -38,7 +36,6 @@ int example_fill_super(struct super_block *s, void *data, int silent)
 		printk("CAN NOT create new inode \n");
 		goto fail;
 	}
-	printk("before create roote inode. If miss this step ,system will crash\n");
 	s->s_root = d_make_root(inode);
 	if (s->s_root)
 		return 0;

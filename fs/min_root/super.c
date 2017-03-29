@@ -12,7 +12,7 @@
 #include <linux/fsnotify.h>
 #include <linux/seq_file.h>
 
-#include "../fill_super_with_simple_operation.h"
+#include "../fill_super.h"
 #include "../inode.h"
 static const struct super_operations example_sops = {
 	.statfs         = simple_statfs,

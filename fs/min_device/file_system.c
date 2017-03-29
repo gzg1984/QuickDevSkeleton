@@ -5,7 +5,7 @@
 #include <linux/namei.h>
 #include <linux/mount.h>
 
-#include "fill_super_with_simple_operation.h"
+#include "fill_super.h"
 static struct dentry *example_fs_mount(struct file_system_type *fs_type,
 		        int flags, const char *dev_name, void *data)
 {
