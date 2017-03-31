@@ -59,12 +59,31 @@ obj-m += example_fs.o
 				page_cache_read/address_mapping.o
 
 ####Class 10 read from block via bread: actrualy , this is not faster than the bio. this will be even slower
-example_fs-y		:= buffer_read/file_system.o \
-				buffer_read/super.o \
-				buffer_read/inode.o \
-				buffer_read/file.o \
-				buffer_read/address_mapping.o
+#example_fs-y		:= bread/file_system.o \
+				bread/super.o \
+				bread/inode.o \
+				bread/file.o \
+				bread/address_mapping.o
 
+####Class 11 read from block via submit_bh: this is very difficault , hard to learn , but it is the previous-step for get_block funtion
+# NOTE: buffer_read folder is older, it has a lot of problem , but shows How I develop this module.
+#
+#example_fs-y		:= submit_bh_readpage/file_system.o \
+				submit_bh_readpage/super.o \
+				submit_bh_readpage/inode.o \
+				submit_bh_readpage/file.o \
+				submit_bh_readpage/address_mapping.o
+
+
+####Class 12  the final and the hardest part: how to use get_block
+# NOTE: Though we know how to create and submit bh now, we CAN NOT submit the bh directly.
+# We must use get_block. But what data should I fill in get_block ?
+#
+example_fs-y		:= get_block/file_system.o \
+				get_block/super.o \
+				get_block/inode.o \
+				get_block/file.o \
+				get_block/address_mapping.o
 
 
 
