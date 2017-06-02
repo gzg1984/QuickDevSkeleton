@@ -93,10 +93,10 @@ example_fs-y		:= get_block/file_system.o \
 #example_fs_nodisk-y		:= super.o fill_super_with_simple_operation.o
 #example_fs_file_on_disk-y		:= inode.o
 
-KERNEL := /lib/modules/`uname -r`/build
+#KERNEL := /lib/modules/`uname -r`/build
+KERNEL :=  /home/maxpain/poky/build/tmp/work/qemux86-poky-linux/linux-yocto/4.10.9+gitAUTOINC+ad2e885015_fe0fb8da3d-r0/linux-qemux86-standard-build/
 
 all:
-	zcat /boot/symvers-3.0.76-0.11-default.gz > Module.symvers
 	make -C $(KERNEL) M=`pwd` modules
 
 install:

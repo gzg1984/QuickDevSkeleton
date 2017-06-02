@@ -9,22 +9,21 @@
 /* Readdir give the name of entry to the VFS, and VFS create dentry then pass to this function**/
 static struct dentry *example_lookup(struct inode * dir, 
 		struct dentry *dentry, 
-		struct nameidata *__unused_nd)
+		unsigned int __unused_nd)
 {
 	struct inode * inode=NULL;
-	/*
-	struct inode* inode=private_inode;
-	if(!inode)
-	*/
+	printk(KERN_INFO"[%s]dentry name is [%s]\n",__func__,dentry->d_name.name);
 	{
 		/* init it! we should read these data from disk ,do we ?*/
 		inode = iget_locked(dir->i_sb, 123);
 
-		inode->i_mode = 0x6660;
-		inode->i_uid = 0xde;
-		inode->i_gid = 0xad;
-		inode->i_size = 7;/** file size 7 byte **/
-		inode->i_atime = inode->i_ctime = inode->i_atime = CURRENT_TIME;
+		inode->i_mode = 0666 | (DT_REG<<12) ; /* Set as regular file **/
+		inode->i_uid.val = 0xde;
+		inode->i_gid.val = 0xad;
+		inode->i_size = 5;/** file size 7 byte **/
+		inode->i_atime = CURRENT_TIME;
+		inode->i_ctime = CURRENT_TIME;
+		inode->i_atime = CURRENT_TIME;
 
 		/* this is implement in file.h */
 		inode->i_fop = &example_file_operations;/* every thing goes through the VFS function **/ 
@@ -43,27 +42,29 @@ const struct inode_operations example_dir_inode_operations = {
 
 
 /* Must implement #2 !*/
-static int example_readdir(struct file * filp,
-			 void * dirent, filldir_t filldir)
+static int example_readdir(struct file *file, struct dir_context *ctx)
 {
-	printk("Get in example_readdir filp->f_pos[%ld]\n",filp->f_pos);
-	if (filp->f_pos)
+        loff_t pos = ctx->pos;
+	char my_only_name[100]="test1";
+
+	printk(KERN_INFO"Get in example_readdir ctx->pos[%lld]\n",pos);
+	if (pos)
 		return 0;
-	filp->f_pos+=1;
+	ctx->pos+=1;
 	/* Hey! we call the function passed by the upper, It knows how to deal
 	 * the strings and numbers as the file name and the file ACL **/
-	filldir(dirent, "test1",
-			5,
-			0,/* offset in this folder inode**/
-			233,/*inode number **/
-			0x1/* regular file **/);
-	return 1;
+	dir_emit(ctx, my_only_name, 
+			strlen(my_only_name),
+                                                233,/*inode number **/
+                                                DT_REG /* 0x1, regular file **/);
+	return 0;
 }
 const struct file_operations example_dir_operations = {
 	.llseek         = generic_file_llseek,
 	.read           = generic_read_dir,
 	/* for newer kernel ,this function will be replace with ...**/
-	.readdir        = example_readdir,         /* The only thing we need exactly in exapmle file system*/
+	.iterate        = example_readdir,         /* The only thing we need exactly in exapmle file system*/
+	/*new readdir is implement as iterater **/
 };
 /* Must implement #1 !*/
 extern struct inode* get_example_fs_root_inode(struct super_block *s)

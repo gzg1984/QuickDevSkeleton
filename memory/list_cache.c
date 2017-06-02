@@ -168,8 +168,8 @@ void __exit my_exit(void)
 module_init(my_init);
 module_exit(my_exit);
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("ZHANG");
-MODULE_VERSION("0.7");
+MODULE_LICENSE("GPLv2");
+MODULE_AUTHOR("gzg1984@gmail.com");
+MODULE_VERSION("0.1");
 
 
