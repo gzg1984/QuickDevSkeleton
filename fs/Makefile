@@ -79,11 +79,30 @@ obj-m += example_fs.o
 # NOTE: Though we know how to create and submit bh now, we CAN NOT submit the bh directly.
 # We must use get_block. But what data should I fill in get_block ?
 #
-example_fs-y		:= get_block/file_system.o \
+#example_fs-y		:= get_block/file_system.o \
 				get_block/super.o \
 				get_block/inode.o \
 				get_block/file.o \
 				get_block/address_mapping.o
+
+####Class 13  
+# use write_page && write iter to write data to file
+#
+#example_fs-y		:= write_page/file_system.o \
+				write_page/super.o \
+				write_page/inode.o \
+				write_page/file.o \
+				write_page/address_mapping.o
+
+####Class 14
+# now,we are using the journal system to write the data to file system
+#
+example_fs-y		:= journal/file_system.o \
+				journal/super_with_journal.o \
+				journal/inode.o \
+				journal/file.o \
+				journal/address_mapping.o
+
 
 
 
@@ -93,8 +112,7 @@ example_fs-y		:= get_block/file_system.o \
 #example_fs_nodisk-y		:= super.o fill_super_with_simple_operation.o
 #example_fs_file_on_disk-y		:= inode.o
 
-#KERNEL := /lib/modules/`uname -r`/build
-KERNEL :=  /home/maxpain/poky/build/tmp/work/qemux86-poky-linux/linux-yocto/4.10.9+gitAUTOINC+ad2e885015_fe0fb8da3d-r0/linux-qemux86-standard-build/
+KERNEL ?= /lib/modules/`uname -r`/build
 
 all:
 	make -C $(KERNEL) M=`pwd` modules
