@@ -11,7 +11,7 @@
 #include <linux/spinlock.h>
 #include <linux/uio.h>
 #include <linux/module.h>
-#include <linux/config.h>
+//#include <linux/config.h>
 
 #include <linux/mm.h>
 #ifdef CONFIG_DEBUG_VM
@@ -23,7 +23,7 @@
 #include <linux/backing-dev.h>
 
 
-#include <asm/semaphore.h>
+//#include <asm/semaphore.h>
 #define DEFINE_MUTEX(m) DECLARE_MUTEX(m)
 #define mutex_init(m) init_MUTEX(m)
 #define mutex_destroy(m) do { } while (0)

@@ -1,4 +1,4 @@
-# Rules for making the NTFS driver.
+# Rules for making the NTFS driver as individual module for kernel 2.6.14
 
 #obj-$(CONFIG_NTFS_FS) += ntfs.o
 obj-m += ntfs.o
