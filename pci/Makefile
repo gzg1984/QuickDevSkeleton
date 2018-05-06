@@ -13,4 +13,5 @@ install:
 
 clean:
 	make -C $(KERNEL) M=`pwd` clean
+	rm modules.order
 

@@ -135,7 +135,7 @@ static struct file_operations my_fops = {
 };
 
 
-static int __devinit my_probe(struct pci_dev *pdev, const struct pci_device_id *ids)
+static int my_probe(struct pci_dev *pdev, const struct pci_device_id *ids)
 {
 	unsigned long pio_start, pio_end, pio_flags, pio_len;
 	unsigned long mmio_start, mmio_end, mmio_flags, mmio_len;
@@ -257,7 +257,7 @@ err_out:
 	return rc;
 }
 
-static void __devexit my_remove(struct pci_dev *pdev)
+static void my_remove(struct pci_dev *pdev)
 {
 	struct mydev *dev = pci_get_drvdata(pdev);
 
@@ -281,7 +281,7 @@ struct pci_driver my_pci_driver = {
 	.name 		= DRV_NAME,
 	.id_table 	= my8139_ids,
 	.probe 		= my_probe,
-	.remove 	= __devexit_p(my_remove),
+	.remove 	= my_remove,
 };
 
 int __init my_init(void)
