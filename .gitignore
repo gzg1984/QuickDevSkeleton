@@ -1,0 +1,12 @@
+*/*.o
+*/*.ko
+*/*~
+*/*.mod.c
+*/.*.c
+*/.*.h
+*/.*.cmd
+*/Module.symvers
+*/.tmp_versions
+*/modules.order
+
+.*~

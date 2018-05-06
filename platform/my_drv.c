@@ -4,6 +4,7 @@
 #include <linux/fs.h>
 #include <linux/interrupt.h>
 #include <linux/cdev.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
@@ -29,7 +30,7 @@ int my_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-int my_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+ssize_t my_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
 	return 0;
 }
@@ -51,7 +52,7 @@ int my_probe(struct platform_device *pdev)
 
 	printk("%s id%d probe, in %ld\n", DRV_NAME, pdev->id, jiffies);
 	
-	dev = (struct mydev *)kzalloc(sizeof(*dev), GFP_KERNEL);
+	dev = (struct mydev *)kmalloc(sizeof(*dev), GFP_KERNEL| __GFP_ZERO);
 	if (NULL == dev)
 		return -ENOMEM;
 	platform_set_drvdata(pdev, dev);
@@ -63,7 +64,7 @@ int my_probe(struct platform_device *pdev)
 
 	/* get ioport */
 	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	printk("%s id%d ioport = %d\n", DRV_NAME, pdev->id, res->start);
+	printk("%s id%d ioport = %llx\n", DRV_NAME, pdev->id, res->start);
 	/* ioport map */
 	dev->ioaddr = ioport_map(res->start, (res->end - res->start + 1));
 	printk("%s id%d ioaddr = 0x%p\n", DRV_NAME, pdev->id, dev->ioaddr);
