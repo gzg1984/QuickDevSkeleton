@@ -7,6 +7,10 @@
 #include <linux/platform_device.h>
 #include <linux/ata_platform.h>
 #include <linux/mm.h>
+#include <linux/init.h>  
+#include <linux/kthread.h>  
+#include <linux/delay.h>  
+
 
 #define DEV_NAME "pata_platform"
 #define PATA_INT	0
@@ -15,35 +19,20 @@ static struct pata_platform_info bfin_pata_platform_data = {
 	.ioport_shift = 2,
 };
 
+#define RES_MEM_INDEX 0
+#define RES_IRQ_INDEX 1
+#define RES_MEM_LENGTH	0x20
 static struct resource fake_pata_res[] = {
 	[0] = {
-			.start 	= 0x60,
-			.end 	= 0x60,
-			//.flags 	= IORESOURCE_IO,
+			.start 	= 0x0,
+			.end 	= 0x0,
 			.flags 	= IORESOURCE_MEM,
 	},
-	{
-		.start = 0x2030C000,
-		.end = 0x2030C01F,
-		.flags = IORESOURCE_MEM,
-	},
-	/*
 	[1] = {
-			.start	= 1,
-			.end	= 1,
-			.flags	= IORESOURCE_IRQ,
+			.start	= PATA_INT,
+			.end	= PATA_INT,
+			.flags	= IORESOURCE_IRQ ,
 	},
-	{
-		.start = 0x2030D018,
-		.end = 0x2030D01B,
-		.flags = IORESOURCE_MEM,
-	},
-	{
-		.start = PATA_INT,
-		.end = PATA_INT,
-		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
-	},
-	*/
 };
 
 static void private_release_notifier(struct device *dev)
@@ -62,39 +51,87 @@ struct platform_device fake_pata_device = {
 		.release = private_release_notifier,
 	},
 };
+static struct page* phy_page = NULL;
+static struct page* last_phy_page = NULL;
+static struct task_struct *tsk = NULL;  
+
+static int thread_function(void *data)  
+{  
+	int time_count = 0;  
+	int cmp_res = 0 ;
+	do {  
+		printk(KERN_INFO "thread_function: %d times", ++time_count);  
+		cmp_res = memcmp(page_address(last_phy_page),page_address(phy_page), RES_MEM_LENGTH);
+		if(cmp_res)
+		{
+			int i = 0;
+			char* va_l=page_address(last_phy_page);
+			char* va=page_address(phy_page);
+			for (i = 0; i < RES_MEM_LENGTH ; i ++)
+			{
+				if ( va_l[i] != va[i] )
+				{
+					printk(KERN_INFO "[%d] [0x%X] ==> [0x%X]", 
+							i, ((char*)va_l)[i] , ((char*)va)[i] );  
+				}
+
+			}
+		}
+		memcpy(page_address(last_phy_page),page_address(phy_page), RES_MEM_LENGTH) ;
+		msleep(1000);  
+	}while(!kthread_should_stop() );  
+	//}while(!kthread_should_stop() && time_count<=30);  
+	return time_count;  
+}  
 
 int __init fake_pata_init(void)
 {
-	struct page* phy_page = alloc_page(GFP_DMA);	
-	void* phy_addr_end = 0;
-//	void* phy_addr_start = kmalloc(0x20,GFP_DMA);
-	void* phy_addr_start = page_address(phy_page) - PAGE_OFFSET;
-	printk("allocated addr : %p \n",phy_addr_start);
+	void* phy_addr_end = NULL ;
+	void* phy_addr_start = NULL ;
+
+	phy_page = alloc_page(GFP_DMA);	
+	last_phy_page = alloc_page(GFP_KERNEL);
+	phy_addr_end = 0;
+	phy_addr_start = page_address(phy_page) - PAGE_OFFSET;
+	memcpy(page_address(last_phy_page),page_address(phy_page), RES_MEM_LENGTH) ;
+
+	printk("Allocated page Physical Address : %p \n",phy_addr_start);
 	if (!phy_addr_start)
 		return -EINVAL;
 	else
-		phy_addr_end = phy_addr_start + 0x20 - 1;
-//	__free_page(phy_page); // let the device register get the page
-				// Kernel tells do not use page this way.
+		phy_addr_end = phy_addr_start + RES_MEM_LENGTH - 1;
 
 	printk("allocated space end at : %p \n",phy_addr_end);
-	fake_pata_res[0].start = (resource_size_t)phy_addr_start ;
-	fake_pata_res[0].end = (resource_size_t)phy_addr_end ;
-	fake_pata_res[1].start = (resource_size_t)phy_addr_start ;
-	fake_pata_res[1].end = (resource_size_t)phy_addr_end ;
+	fake_pata_res[RES_MEM_INDEX].start = (resource_size_t)phy_addr_start ;
+	fake_pata_res[RES_MEM_INDEX].end = (resource_size_t)phy_addr_end ;
+
+	tsk = kthread_run(thread_function, NULL, "mythread%d", 1);  
+	if (IS_ERR(tsk)) {  
+		printk(KERN_INFO "create kthread failed!\n");  
+	}  
+	else {  
+		printk(KERN_INFO "create ktrhead ok!\n");  
+	}  
 
 	return platform_device_register(&fake_pata_device);
 }
 
 void __exit fake_pata_exit(void)
 {
+	if (!IS_ERR(tsk)){  
+		int ret = kthread_stop(tsk);  
+		printk(KERN_INFO "thread function has run %ds\n", ret);  
+	}  
 	platform_device_unregister(&fake_pata_device);
 
 	printk("Freeing addr : 0x%llx \n",fake_pata_res[0].start);
-	//TODO: free phy_page ? no need
-	//kfree((void*)fake_pata_res[0].start);
 	fake_pata_res[0].start = 0 ;
 	fake_pata_res[0].end = 0 ;
+
+	if(phy_page)
+		__free_page(phy_page); 
+
+	phy_page = NULL ;
 }
 
 module_init(fake_pata_init);

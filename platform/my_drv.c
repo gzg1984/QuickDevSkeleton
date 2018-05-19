@@ -8,7 +8,7 @@
 #include <asm/io.h>
 #include <asm/uaccess.h>
 
-#define DRV_NAME "key"
+#define DRV_NAME "pata_platform"
 #define MY_MAJOR 80
 
 struct mydev {
@@ -32,14 +32,31 @@ int my_release(struct inode *inode, struct file *filp)
 
 ssize_t my_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
-	return 0;
+	return count;
 }
+static char __iomem *ioaddr = NULL;
+ssize_t my_write (struct file *fp, const char __user *from, size_t count, loff_t *return_loff)
+{
+	char* temp=kzalloc(count+1,GFP_KERNEL);
+	int res = copy_from_user(temp,from,count);
+	printk("Trying write %s , length [%d]\n",
+			temp, res);
+	if (ioaddr)
+		ioaddr[0] = from[0];
+	else
+		printk("ioaddr is null\n");
+
+	kfree(temp);
+	return count;
+}
+
 
 struct file_operations my_fops = {
 	.owner = THIS_MODULE,
 	.open = my_open,
 	.release = my_release,
 	.read = my_read,
+	.write = my_write,
 };
 
 
@@ -63,11 +80,13 @@ int my_probe(struct platform_device *pdev)
 	printk("%s id%d irq = %ld\n", DRV_NAME, pdev->id, dev->irq);
 
 	/* get ioport */
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	printk("%s id%d ioport = %llx\n", DRV_NAME, pdev->id, res->start);
 	/* ioport map */
-	dev->ioaddr = ioport_map(res->start, (res->end - res->start + 1));
-	printk("%s id%d ioaddr = 0x%p\n", DRV_NAME, pdev->id, dev->ioaddr);
+	//dev->ioaddr = ioport_map(res->start, (res->end - res->start + 1));
+	//dev->ioaddr = ioremap(res->start, (res->end - res->start + 1));
+	ioaddr = (char*)(res->start + PAGE_OFFSET );
+	printk("%s id%d ioaddr = 0x%p\n", DRV_NAME, pdev->id, ioaddr );
 
 	devno = MKDEV(MY_MAJOR, pdev->id);
 	cdev_init(&dev->mycdev, &my_fops);
