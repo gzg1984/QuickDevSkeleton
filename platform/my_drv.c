@@ -125,7 +125,7 @@ void __exit my_exit(void)
 module_init(my_init);
 module_exit(my_exit);
 
-MODULE_LICENSE("GPLv2");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("gzg1984@aliyun.com");
 MODULE_VERSION("0.1");
 

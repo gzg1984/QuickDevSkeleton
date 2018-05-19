@@ -1,6 +1,6 @@
 #Makefile for our own module
 #obj-m := plat_drv.o plat_dev.o
-obj-m := my_dev.o my_drv.o my_dev2.o
+obj-m := pata_platform.o fake_pata.o
 
 KERNELDIR := /lib/modules/`uname -r`/build
 
