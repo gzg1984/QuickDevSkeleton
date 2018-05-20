@@ -14,10 +14,10 @@
     当这个platform设备被作为ATA设备注册到系统中之后，操作系统的libata子系统，将会按真实设备一样去操作这个设备，
     
     然后，platform dev关联的内核线程就会监控到如下的，libata向这个虚假ata设备的操作动作：
-···
-    IO [2] [0x31] ==> [0x55]
+```
+    IO [2] [0x31] ==> [0x55]
     IO [3] [0x32] ==> [0xAA]
     IO [6] [0x30] ==> [0xA0]
     IO [6] [0xA0] ==> [0xB0]
     Controller Reg [ATA_REG_DATA] [0xA] ==> [0x8]
-···
+```
