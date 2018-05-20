@@ -1,8 +1,8 @@
-obj-m := pata_platform.o fake_pata.o my_drv.o
+obj-m := fake_pata_driver.o fake_pata.o 
 
 KERNELDIR := /lib/modules/`uname -r`/build
 
-all: pata_platform.c fake_pata.c
+all:
 	make -C $(KERNELDIR) M=`pwd` modules
 
 test: all
