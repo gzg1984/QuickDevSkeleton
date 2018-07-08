@@ -7,9 +7,10 @@ all:
 	make -C $(KERNEL) M=`pwd` modules
 
 install:
-	make -C $(KERNEL) M=`pwd` modules
-	make -C $(KERNEL) M=`pwd` modules_install
-	depmod -A
+	#make -C $(KERNEL) M=`pwd` modules
+	#make -C $(KERNEL) M=`pwd` modules_install
+	#depmod -A
+	install -D meminfo /usr/local/bin/meminfo
 
 clean:
 	make -C $(KERNEL) M=`pwd` clean
