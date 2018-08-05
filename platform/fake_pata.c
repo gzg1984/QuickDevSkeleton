@@ -77,8 +77,17 @@ static struct task_struct *tsk = NULL;
 
 static char Identify_Drive_Information[512]=
 {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	'F','A','K','E','D','I','S','K',
+	0 /*low of 0 word*/ ,0x1 << 0x2 /* high of 0 word*/,
+       	1,0,/*Number of cylinders*/
+       	0,0,
+       	1,0,/*Number of heads*/
+       	1,0,/*Numbe  of heads f unformatted bytes per track*/
+       	1,/* low of 5 word*/ 0,/* high of 5 word*//*Number of unformatted bytes per sector*/
+       	1,0,/*Number of sectors per track*/
+       	0,0,
+       	0,0,
+       	0,0,
+	'F','A','K','E','D','I','S','K',/*Serial number**/
 };
 static int start_offset = 0;
 static int enable_read = 0;
@@ -87,13 +96,14 @@ static void read_things(void)
 	unsigned char* va=page_address(phy_page);
 	if(enable_read)
 	{
+		printk("Current fake data offset %d\n", start_offset);  
 		msleep(1);
 		va[ATA_REG_STATUS]=0x1 << 7 ;
 		msleep(1);
 		va[ATA_REG_DATA]=Identify_Drive_Information[start_offset];
 		va[ATA_REG_STATUS]=0x1 << 3 ;
 		start_offset=(start_offset+1)%512;
-		if(enable_read>30)
+		if(start_offset>40)
 		{
 			enable_read=0;
 		}
@@ -143,6 +153,8 @@ static int thread_function(void *data)
 								break;
 							case ATA_REG_DEVICE :
 								strcpy(REG_OUTPUT,"ATA_REG_DEVICE");
+								start_offset=0;
+								enable_read=1;
 								break;
 							case ATA_REG_CMD :
 								strcpy(REG_OUTPUT,"ATA_REG_CMD");
@@ -186,7 +198,6 @@ static int thread_function(void *data)
 
 				}
 			}
-			dev_info(&(fake_pata_device_p->dev), "Current fake data offset %d\n", start_offset);  
 			read_things();/*fake read handler, 
 				      real disk should read data from disk now */
 			memcpy(va_l,va, RES_MEM_LENGTH) ;

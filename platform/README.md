@@ -10,3 +10,12 @@ To execute a PIO read command, the host and drive follow these steps:
 7. The drive clears DRQ. If transfer of another block is required, the drive
 also sets BSY and the above sequence is repeated from step 4).
 The following table shows a PIO read command that transfers two blocks without an error (in this and subsequent tables, read downward to follow the sequence of steps executed).
+
+Will casue I/O error now.
+But , we can make the libata send ID check command first.
+If we can handle this command, 
+then we can make the system recognize this fake device
+
+currently error messages;
+Aug  5 17:44:14 ubuntu kernel: [ 1728.571220] ata5.00: failed to IDENTIFY (I/O error, err_mask=0x2)
+
