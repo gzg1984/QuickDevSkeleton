@@ -75,45 +75,51 @@ static struct page* ctl_phy_page = NULL;
 static struct page* last_ctl_phy_page = NULL;
 static struct task_struct *tsk = NULL;  
 
+static char Identify_Drive_Information[512]=
+{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	'F','A','K','E','D','I','S','K',
+};
+static int start_offset = 0;
+static int enable_read = 0;
+static void read_things(void)
+{
+	unsigned char* va=page_address(phy_page);
+	if(enable_read)
+	{
+		msleep(1);
+		va[ATA_REG_STATUS]=0x1 << 7 ;
+		msleep(1);
+		va[ATA_REG_DATA]=Identify_Drive_Information[start_offset];
+		va[ATA_REG_STATUS]=0x1 << 3 ;
+		start_offset=(start_offset+1)%512;
+		if(enable_read>30)
+		{
+			enable_read=0;
+		}
+	}
+}
+
 static int thread_function(void *data)  
 {  
+	struct platform_device* fake_pata_device_p=data;
 	int cmp_res = 0 ;
 	do {  
 		/* compare IO */
 		{
 			unsigned char* va_l=page_address(last_phy_page);
 			unsigned char* va=page_address(phy_page);
+			char REG_OUTPUT[32] = {0};
+			char COMMAND_OUTPUT[32] = {0};
+
 			cmp_res = memcmp(va_l,va, RES_MEM_LENGTH);
 			if(cmp_res)
 			{
 				int i = 0;
 				for (i = 0; i < RES_MEM_LENGTH ; i ++)
 				{
+					strcpy(COMMAND_OUTPUT,"");
 					if ( va_l[i] != va[i] )
-					{
-						printk(KERN_INFO "IO [%d] [0x%X] ==> [0x%X]\n", 
-								i, (unsigned char)va_l[i] , (unsigned char)va[i] );  
-					}
-
-				}
-			}
-			memcpy(page_address(last_phy_page),page_address(phy_page), RES_MEM_LENGTH) ;
-		}
-
-		/* compare Control Reg */
-		{
-			unsigned char* va_ctl_l=page_address(last_ctl_phy_page);
-			unsigned char* va_ctl=page_address(ctl_phy_page);
-			char REG_OUTPUT[32] = {0};
-
-
-			cmp_res = memcmp(va_ctl_l,va_ctl, RES_MEM_LENGTH);
-			if(cmp_res)
-			{
-				int i = 0;
-				for (i = 0; i < RES_MEM_LENGTH ; i ++)
-				{
-					if ( va_ctl_l[i] != va_ctl[i] )
 					{
 						switch ( i )
 						{
@@ -138,20 +144,105 @@ static int thread_function(void *data)
 							case ATA_REG_DEVICE :
 								strcpy(REG_OUTPUT,"ATA_REG_DEVICE");
 								break;
-							case ATA_REG_STATUS :
-								strcpy(REG_OUTPUT,"ATA_REG_STATUS");
+							case ATA_REG_CMD :
+								strcpy(REG_OUTPUT,"ATA_REG_CMD");
+								switch(va[i])
+								{
+									case ATA_CMD_DEV_RESET:
+										strcpy(COMMAND_OUTPUT,"Dev Reset");
+										break;
+									case ATA_CMD_CHK_POWER:
+										strcpy(COMMAND_OUTPUT,"Check Power");
+										break;
+									case ATA_CMD_STANDBY:
+										strcpy(COMMAND_OUTPUT,"Standby !");
+										break;
+									case ATA_CMD_IDLE:
+										strcpy(COMMAND_OUTPUT,"Idle !");
+										break;
+									case ATA_CMD_ID_ATA:
+										strcpy(COMMAND_OUTPUT,"Identify Drive !");
+										start_offset=0;
+										enable_read=1;
+										break;
+									case ATA_CMD_PACKET:
+										strcpy(COMMAND_OUTPUT,"Packet![TODO: not implement]");
+										break;
+									default:
+										strcpy(COMMAND_OUTPUT,"Unknown !");
+										break;
+
+								}
 								break;
 							default:
 								strcpy(REG_OUTPUT,"Unknown");
 								break;
 						}
-						printk(KERN_INFO "Controller Reg [%s] [0x%X] ==> [0x%X]\n", 
-								REG_OUTPUT, va_ctl_l[i] , va_ctl[i] );  
+						dev_info(&(fake_pata_device_p->dev), "CBR [%d][%15.15s] [0x%X] ==> [0x%X] %s\n", 
+								i, REG_OUTPUT,
+								(unsigned char)va_l[i] , (unsigned char)va[i],
+								COMMAND_OUTPUT);  
 					}
 
 				}
 			}
-			memcpy(page_address(last_phy_page),page_address(phy_page), RES_MEM_LENGTH) ;
+			dev_info(&(fake_pata_device_p->dev), "Current fake data offset %d\n", start_offset);  
+			read_things();/*fake read handler, 
+				      real disk should read data from disk now */
+			memcpy(va_l,va, RES_MEM_LENGTH) ;
+		}
+
+		/* compare Control Reg */
+		{
+			unsigned char* va_ctl_l=page_address(last_ctl_phy_page);
+			unsigned char* va_ctl=page_address(ctl_phy_page);
+			char REG_OUTPUT[32] = {0};
+			char COMMAND_OUTPUT[32] = {0};
+
+
+			cmp_res = memcmp(va_ctl_l,va_ctl, RES_MEM_LENGTH);
+			if(cmp_res)
+			{
+				int i = 0;
+				for (i = 0; i < RES_MEM_LENGTH ; i ++)
+				{
+					if ( va_ctl_l[i] != va_ctl[i] )
+					{
+						strcpy(COMMAND_OUTPUT,"");
+						switch ( i )
+						{
+							case 0x0 :
+								strcpy(REG_OUTPUT,"Device Control");
+								if(va_ctl[i]  & (0x1 << 1))
+								{
+									sprintf(COMMAND_OUTPUT,"Enable Interupt");
+								}
+								else
+								{
+									sprintf(COMMAND_OUTPUT,"Disable Interupt");
+								}
+								if(va_ctl[i]  & (0x1 << 2))
+								{
+									sprintf(COMMAND_OUTPUT,"%s, software reset",COMMAND_OUTPUT);
+								}
+								break;
+							case 0x1 :
+								/* should not get here ?*/
+								strcpy(REG_OUTPUT,"Drive Address[?]");
+								break;
+							default:
+								strcpy(REG_OUTPUT,"Unknown");
+								break;
+						}
+						dev_info(&(fake_pata_device_p->dev),"CONTROL BLOCK registers [%d][%s] [0x%X] ==> [0x%X] %s\n", 
+								i,REG_OUTPUT, 
+								va_ctl_l[i] , va_ctl[i],
+								COMMAND_OUTPUT);  
+					}
+
+				}
+			}
+			memcpy(va_ctl_l,va_ctl, RES_MEM_LENGTH) ;
 		}
 		msleep(100);  
 	} while( !kthread_should_stop() );  
@@ -194,7 +285,7 @@ int __init fake_pata_init(void)
 	create_fake_res(&(fake_pata_res[RES_CTL_MEM_INDEX]),ctl_phy_page);
 	memcpy(page_address(last_ctl_phy_page),page_address(ctl_phy_page), RES_MEM_LENGTH) ;
 
-	tsk = kthread_run(thread_function, NULL, "mythread%d", 1);  
+	tsk = kthread_run(thread_function, &fake_pata_device, "fake_pata_dev_thread");  
 	if (IS_ERR(tsk)) {  
 		printk(KERN_INFO "create kthread failed!\n");  
 	}  
