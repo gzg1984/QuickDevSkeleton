@@ -210,6 +210,7 @@ static int pata_platform_probe(struct platform_device *pdev)
 	 */
 	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 
+	dev_info(&(pdev->dev),"[%s][%d]Trying to __pata_platform_probe",__func__,__LINE__);
 	return __pata_platform_probe(&pdev->dev, io_res, ctl_res, irq_res,
 				     pp_info ? pp_info->ioport_shift : 0,
 				     pio_mask, &pata_platform_sht);
