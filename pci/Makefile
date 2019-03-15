@@ -1,6 +1,7 @@
 # makefile for modules
 
-obj-m := my_pci2.o
+#obj-m := 0613.o my_pci.o my_pci2.o
+obj-m := any.o
 KERNEL := /lib/modules/`uname -r`/build
 
 all:
@@ -13,5 +14,5 @@ install:
 
 clean:
 	make -C $(KERNEL) M=`pwd` clean
-	rm modules.order
+	@rm modules.order
 
