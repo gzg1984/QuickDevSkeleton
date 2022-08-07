@@ -5,7 +5,8 @@ default:
 	
 test:default
 	insmod func.ko
-	grep test1 /proc/kallsyms
+	-grep exported_example /proc/kallsyms
+	-grep no_exported_example /proc/kallsyms
 	rmmod func
 
 
